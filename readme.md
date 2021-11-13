@@ -4,7 +4,7 @@ Ultimately, to make a graph of all possible Chopsticks game states.
 
 Subgoals:
 
-1. Simulate the game Chopsticks
+1. ~~Simulate the game Chopsticks~~
 2. Make a program that will try every possible move and make a big tree
 3. Visualize the tree with a cool graph
 4. ???
