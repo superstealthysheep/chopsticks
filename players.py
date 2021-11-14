@@ -7,36 +7,26 @@ class RandomPlayer(chopsticksGame.Player):
     self.target_player = 0
     self.target_hand = 0
     self.attack_hand = 0
-    self.split_probability = 0.5
+    self.split_probability = 1
 
   def strategize(self, gamestate):
     #check if splitting is possible
     if self.can_split():
       if random.random() < self.split_probability:
-        self.split()
-        return "split" # to break out of this function
+        return chopsticksGame.Move("split", self) #this self.hands[0] thing is just my lazy, janky way to let Move know what player is doing the splitting
 
-    #assemble list of potential targets
-    targets = []
-    for player in gamestate.players:
-      if player != self and player.alive:
-        targets.append(player)
-    #pick a target
+    targets = self.list_targets(gamestate)
     self.target_player = random.choice(targets)
       
     #lists that target's non-empty hands
-    target_hands = []
-    for hand in self.target_player.hands:
-      if hand.fingers:
-        target_hands.append(hand)
+    target_hands = self.list_target_hands(self.target_player)
     #pick target hand
     self.target_hand = random.choice(target_hands)
 
-    attack_hands = []
-    for hand in self.hands:
-      if hand.fingers:
-        attack_hands.append(hand)   
+    attack_hands = self.list_attack_hands()
     self.attack_hand = random.choice(attack_hands)
+
+    return chopsticksGame.Move("attack", self.attack_hand, self.target_player, self.target_hand)
 
 class HumanPlayer(chopsticksGame.Player):
   def __init__(self, hand_count=2, hand_size=5):
@@ -48,15 +38,12 @@ class HumanPlayer(chopsticksGame.Player):
 
   def strategize(self, gamestate):
     #assemble list of potential targets
-    self.targets = []
-    for player in gamestate.players:
-      if player != self:
-        self.targets.append(player)
+    self.targets = self.list_targets()
 
     if self.can_split():
       if (self.prompt_for_split()):
-        self.split()
-        return "split" # to break out of this function
+        move = chopsticksGame.Move("split", self) #this self.hands[0] thing is just my lazy, janky way to let Move know what player is doing the splitting
+        return move
 
     self.prompt_for_attack_hand()
 
@@ -66,6 +53,8 @@ class HumanPlayer(chopsticksGame.Player):
       self.prompt_for_target_player()
 
     self.prompt_for_target_hand()
+
+    return chopsticksGame.Move("attack", self.attack_hand, self.target_player, self.target_hand)
 
     #eventually have this function return the last move made for logging/graphing puposes
 
@@ -89,6 +78,8 @@ class HumanPlayer(chopsticksGame.Player):
           else:
             satisfied = True
 
+    return self.attack_hand
+
   def prompt_for_target_player(self):
     satisfied = False
     while not satisfied:
@@ -109,6 +100,8 @@ class HumanPlayer(chopsticksGame.Player):
           print("That player is dead")
         else:
           satisfied = True
+
+    return self.target_player
       
       
 
@@ -127,6 +120,8 @@ class HumanPlayer(chopsticksGame.Player):
           print("That hand is dead")
         else:
           satisfied = True
+
+    return self.target_hand
   
 
   
