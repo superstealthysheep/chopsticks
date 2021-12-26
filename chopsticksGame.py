@@ -1,4 +1,4 @@
-# import copy
+import copy
 
 class Hand:
   id_counter = 0;
@@ -35,6 +35,9 @@ class Player:
       pretty_hand_list.append(hand.fingers)
         
     return "Player {}: {}".format(self.id, pretty_hand_list)
+
+  def __repr__(self): 
+    return str(self) #for debug purposes
 
   @classmethod
   def id_to_player(cls, id):
@@ -81,8 +84,15 @@ class Player:
 
     print("SPLIT!!!")
     
-  def equals(self, player):
-    return self.hands[0] == player.hands[0] and self.hands[1] == player.hands[1]
+  def equals(self, other):
+    if len(self.hands) != len(other.hands):
+      return False
+    else:
+      for i in range(len(self.hands)):
+        if self.hands[i].fingers != other.hands[i].fingers:
+          return False
+      else:
+        return True
 
   def print(self):
     print(self.id)
@@ -93,6 +103,13 @@ class Player:
       if hand.fingers:
         self.alive = True
     return self.alive
+
+  def id_to_hand(self, hand_id):
+    for hand in self.hands:
+      if hand.id == hand_id:
+        return hand
+    else:
+      raise ValueError("id_to_hand was passed an invalid id")
 
   def list_targets(self, gamestate): #assemble list of potential targets
     targets = []
@@ -131,12 +148,19 @@ class Player:
     
   
 class Gamestate:
+  id_counter = 0
+
   def __init__(self):
     self.players = []
     self.active_player_index = 0
-    self.active_player = None
+    # self.active_player = None
     self.parents = []
     self.children = []
+    self.id = Gamestate.id_counter #will deepcopy not increment the ID?
+    Gamestate.id_counter += 1
+
+  # def __repr__(self):
+  #   return "Gamestate {}".format(self.id)
 
   # @classmethod
   # def construct_from_data(cls, data):
@@ -152,19 +176,27 @@ class Gamestate:
   #   data = copy.deepcopy(original._data())
   #   return cls.construct_from_data(data)
 
+  @classmethod
+  def deepcopy(cls, original): #deep copy except for the id
+    new_instance = copy.deepcopy(original)
+    new_instance.id = cls.id_counter
+    cls.id_counter += 1
+    return new_instance
+
   # def _data(self):
   #   data = [self.players, self.active_player_index, self.parents, self.children]
   #   return data
+
 
   def add(self, player):
     self.players.append(player)
 
   def equals(self, state):
     for player in self.players:
-      if self.players.len() != state.players.len():
+      if len(self.players) != len(state.players):
         return False
       else:
-        for i in range(self.players.len()):
+        for i in range(len(self.players)):
           if not self.players[i].equals(state.players[i]):
             return False
       if(self.active_player_index != state.active_player_index):
@@ -191,7 +223,8 @@ class Gamestate:
         return False
 
   def print(self): #should eventually do this through a __str__(), I think
-    print("Gamestate:")
+    # print("Gamestate:")
+    print("Gamestate {}:".format(self.id))
     for i in range(len(self.players)):
       if i == self.active_player_index:
         print("{}  *active player".format(self.players[i])) #asterisk indicates active player
@@ -235,6 +268,50 @@ class Move():
     if self.type == "attack":
       return "{},{} attacks {},{}".format(self.attack_hand.owner.id, self.attack_hand.id, self.target_player.id, self.target_hand.id, self.target_hand.id)
     elif self.type == "split":
-      return "{} splits".format(self.attack_hand.id)
+      return "player {} splits".format(self.attack_hand.owner.id)
+    elif self.type == "exhausted":
+      return "move: \"exhausted\""
     else:
       raise ValueError("Move constructed with invalid type {}".format(self.type))
+
+  def transplant(self, donor, recipient): #takes a move from some donor gamestate, then converts it to the same move (meaning which hands are hitting which hands) for the recipient gamestate
+    if not donor.equals(recipient): 
+      raise ValueError("Attempted to transplant move between non-identical gamestates")
+
+    #0. Check if it's a split (special case)
+    if self.type == "split":
+      #1. gather
+      donor_attack_hand = self.attack_hand
+      #2. convert
+      attack_player_index = donor.players.index(donor_attack_hand.owner)
+      #3. repackage
+      attack_player = recipient.players[attack_player_index]
+      self.attack_hand = attack_player.hands[0]
+      return    
+
+    #if it's not a split
+    #1. gather up the info from donor
+    donor_attack_hand = self.attack_hand
+    donor_target_player = self.target_player
+    donor_target_hand = self.target_hand
+
+    #2. convert it for reconstruction
+    attack_player_index = donor.players.index(donor_attack_hand.owner)
+    attack_hand_id = donor_attack_hand.id
+    target_player_index = donor.players.index(donor_target_player)
+    target_hand_id = donor_target_hand.id
+
+    #3. package it back up in recipient
+    attack_player = recipient.players[attack_player_index]
+    self.attack_hand = attack_player.id_to_hand(attack_hand_id)
+    self.target_player = recipient.players[target_player_index]
+    self.target_hand = self.target_player.id_to_hand(target_hand_id)
+
+
+
+
+
+
+  
+  def __repr__(self): #like this for debug reasons
+    return self.type
