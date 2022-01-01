@@ -162,6 +162,16 @@ class Gamestate:
   # def __repr__(self):
   #   return "Gamestate {}".format(self.id)
 
+  def __str__(self):
+    output = "Gamestate {}:\n".format(self.id)
+    for i in range(len(self.players)):
+      if i == self.active_player_index:
+        output = output + "{}  *active player\n".format(self.players[i]) #asterisk indicates active player
+      else:
+        output = output + str(self.players[i]) + "\n"
+
+    return output
+
   # @classmethod
   # def construct_from_data(cls, data):
   #   new_instance = cls()

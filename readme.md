@@ -15,6 +15,9 @@ Subgoals:
 2. Splits must be neatly in half
 3. Splitting counts as a turn
 
+### Dependencies
+pyvis: `pip install pyvis`
+
 ### Project history
 In August I started wondering if I could find out an optimal Chopsticks strategy. I started out by making a graph of a bunch of game states. 
 It soon became quite tedious, so I decided I'd write a program to do it or something. 

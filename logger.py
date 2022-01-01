@@ -15,6 +15,7 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
     #initialize move list
     self.all_moves = active_player.list_all_moves(self.gamestate)
     # self.moves_tried = [] #this one might be unnecessary
+    self.move_log = [] #will hold move/destination pairs for all moves taken
     self.moves_remaining = self.all_moves
     # self.initialize_move_list()
 
@@ -50,6 +51,8 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
   def sufficiently_deep_copy(cls, parent_node): #basically a shallow copy EXCEPT the gamestate is a deep copy. Children are copied shallowly (cause otherwise computation time increases exponentially ._. whoops). Moves technically don't need to be copied, but they're in there bc that's part of the shallow copy
   #used to make children basically
     child_node = copy.copy(parent_node)
+    child_node.children = [] #whooops, forgot about this too
+    child_node.move_log = []
     child_node.gamestate = copy.deepcopy(parent_node.gamestate)
 
     return child_node
@@ -104,6 +107,7 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
     self.moves_remaining.remove(move)
     if child not in self.children:
       self.children.append(child) #the if statement is because it's possible for two different moves to output the same gamestate, e.g. player 0 in (1,1),(0, 1) has two ways to attack to return (1,1),(0,2)
+    self.move_log.append({"move":move, "child":child})
 
 
 class Logger(): #takes a gamestate as input, not a node
@@ -115,9 +119,10 @@ class Logger(): #takes a gamestate as input, not a node
     # self.starting_gamestate = starting_gamestate
     # self.gamestate = self.starting_gamestate
     self.starting_node = self.create_node(starting_gamestate)
-    starting_gamestate.node = self.starting_node
+    # starting_gamestate.node = self.starting_node
     self.node = self.starting_node
     # self.node_list.append(self.starting_node) #accidentally redundant
+    self.move_log = [] #stores dicts of move/destination pairs
 
     # self.history = []
   
@@ -178,11 +183,11 @@ class Logger(): #takes a gamestate as input, not a node
 
         replacement_child = self.gamestate_to_node(child_node.gamestate) #searches in the existing list of gamestates to see if there's a previous one which the child is a duplicate of
         if replacement_child: #and not replacement_child.equals(child_node): #why do we need to check if (replacment node)? isn't it guaranteed to be true if we just created that child node?
-          print("!!!!!Repeated gamestate {}! deleting newborn node ({})...".format(replacement_child.id, child_node.id))
+          print("!!!!!Repeated gamestate {}! deleting newborn node ({})...".format(replacement_child.gamestate.id, child_node.id))
           GamestateNode.pop_last_node(child_node.id)#deletes the child node
           child_node = replacement_child
         else:
-          print("This gamestate {} has not appeared before. Keeping newborn node...".format(child_node.gamestate))
+          print("This gamestate {} has not appeared before. Keeping newborn node ({})...".format(child_node.gamestate.id, child_node.id))
           self.node_list.append(child_node)
           self.unexhausted_nodes.append(child_node)
         parent_node.log_move(move, child_node) #wow, the parent will only accept the child after they've proven themself to be of use. heartless... 
