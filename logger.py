@@ -1,6 +1,7 @@
 import copy
 import chopsticksGame
 import players
+import displayer
 
 class GamestateNode(): #extends Gamestate but also stores children, possible moves, moves tried
   id_counter = 0
@@ -11,16 +12,19 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
     self.gamestate = gamestate
     active_player = self.gamestate.players[self.gamestate.active_player_index]
     self.children = []
+    self.depth = 0 #this will maybe help with the displaying? depth is distance from the starting point
 
     #initialize move list
     self.all_moves = active_player.list_all_moves(self.gamestate)
     # self.moves_tried = [] #this one might be unnecessary
     self.move_log = [] #will hold move/destination pairs for all moves taken
-    self.moves_remaining = self.all_moves
+    self.moves_remaining = copy.copy(self.all_moves) #TEMPORARY? copy.copy
     # self.initialize_move_list()
 
     self.id = GamestateNode.id_counter
     GamestateNode.id_counter += 1
+
+    self.color = None #I hate having to do this here. I'd rather add the color attribute in displayer.py, except I don't thaink that actually works to create a new attribute
 
     GamestateNode.node_list.append(self)
 
@@ -66,6 +70,7 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
     #update id of the node
     child_node.id = cls.id_counter
     cls.id_counter = cls.id_counter + 1
+    child_node.depth = parent_node.depth + 1
 
     #update the id of the gamestate CONTAINED INSIDE the node
     child_node.gamestate.id = chopsticksGame.Gamestate.id_counter
@@ -100,7 +105,7 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
   def initialize_move_list(self):
     active_player = self.gamestate.players[self.gamestate.active_player_index]
     self.all_moves = active_player.list_all_moves(self.gamestate)
-    self.moves_remaining = self.all_moves
+    self.moves_remaining = copy.copy(self.all_moves) #TEMPORARY?: copy.copy
 
   def log_move(self, move, child): #updates the lists of moves for this node, and also adds child to the node's children list
     # self.moves_tried.append(move)
@@ -108,6 +113,15 @@ class GamestateNode(): #extends Gamestate but also stores children, possible mov
     if child not in self.children:
       self.children.append(child) #the if statement is because it's possible for two different moves to output the same gamestate, e.g. player 0 in (1,1),(0, 1) has two ways to attack to return (1,1),(0,2)
     self.move_log.append({"move":move, "child":child})
+
+  def recursive_depth_update(self, new_depth): #updates this node's depth to the specified value, then tells all children with depth > new_depth + 1 to also recursive_depth_update() themselves
+    if new_depth > self.depth:
+      raise ValueError("Trying to update node {}'s depth to a HIGHER number. Is this correct?")
+    self.depth = new_depth
+    for child in self.children:
+      if child.depth > new_depth + 1:
+        child.recursive_depth_update(new_depth + 1)
+    
 
 
 class Logger(): #takes a gamestate as input, not a node
@@ -123,11 +137,9 @@ class Logger(): #takes a gamestate as input, not a node
     self.node = self.starting_node
     # self.node_list.append(self.starting_node) #accidentally redundant
     self.move_log = [] #stores dicts of move/destination pairs
+    self.done = False
 
     # self.history = []
-  
-  def done(self):
-    pass
 
   def create_node(self, gamestate): #creates the new node and sets gamestate.node to [a reference to that node] 
     new_node = GamestateNode(gamestate)
@@ -158,13 +170,16 @@ class Logger(): #takes a gamestate as input, not a node
       active_player = self.node.gamestate.players[self.node.gamestate.active_player_index]
 
       print("active player: {}".format(active_player))
+      print("Movelist: {}".format(self.node.moves_remaining))
       move = active_player.strategize(self.node)
 
       print("Game loop move: {}".format(move))
 
       #handling if the node is exhausted
       if move.type == "exhausted":
-        self.unexhausted_nodes.pop()
+        # self.unexhausted_nodes.pop()
+        if self.node in self.unexhausted_nodes:
+          self.unexhausted_nodes.remove(self.node) #fix this later. I can probably do this check earlier and make the code run a bit faster.
         try:
           next_node = self.unexhausted_nodes[-1] #typo found here?
         except IndexError: #if no unexhausted nodes remain
@@ -185,7 +200,14 @@ class Logger(): #takes a gamestate as input, not a node
         if replacement_child: #and not replacement_child.equals(child_node): #why do we need to check if (replacment node)? isn't it guaranteed to be true if we just created that child node?
           print("!!!!!Repeated gamestate {}! deleting newborn node ({})...".format(replacement_child.gamestate.id, child_node.id))
           GamestateNode.pop_last_node(child_node.id)#deletes the child node
-          child_node = replacement_child
+
+          #Depth minimizing stuff
+          if child_node.depth < replacement_child.depth:
+            print("But newborn child has lower depth ({}) than previous occurence ({}). Updating replacement child's depth to match...".format(child_node.depth, replacement_child.depth))
+            replacement_child.recursive_depth_update(child_node.depth)
+            # replacement_child.depth = child_node.depth
+
+          child_node = replacement_child          
         else:
           print("This gamestate {} has not appeared before. Keeping newborn node ({})...".format(child_node.gamestate.id, child_node.id))
           self.node_list.append(child_node)
@@ -196,7 +218,12 @@ class Logger(): #takes a gamestate as input, not a node
       self.node = next_node
       self.node.gamestate.print()
       
+    self.done = True
     print(self.unexhausted_nodes)
+
+  def make_displayer(self):
+    return displayer.Displayer(self)
+
 
 class DepthFirstPlayer(chopsticksGame.Player): #takes the first move available in the list stored for that gamestate
   def __init__(self, hand_count=2, hand_size=5):

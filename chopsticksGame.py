@@ -19,7 +19,7 @@ class Player:
   player_list = []
 
   def __init__(self, hand_count=2, hand_size=5):
-    self.alive = True
+    # self.alive = True Now just use self.check_alive()
     self.hand_count = hand_count
     self.hands = []
     self.id = Player.id_counter
@@ -98,11 +98,11 @@ class Player:
     print(self.id)
 
   def check_alive(self):
-    self.alive = False
+    alive = False
     for hand in self.hands:
       if hand.fingers:
-        self.alive = True
-    return self.alive
+        alive = True
+    return alive
 
   def id_to_hand(self, hand_id):
     for hand in self.hands:
@@ -114,7 +114,7 @@ class Player:
   def list_targets(self, gamestate): #assemble list of potential targets
     targets = []
     for player in gamestate.players:
-      if player != self and player.alive:
+      if player != self and player.check_alive():
         targets.append(player)
       
     return targets
@@ -139,11 +139,11 @@ class Player:
     all_moves = []
     if self.can_split():
       all_moves.append(Move("split", self.hands[0])) #this self.hands[0] thing is just my lazy, janky way to let Move know what player is doing the splitting
-    else:
-      for attack_hand in self.list_attack_hands():
-        for target_player in self.list_targets(gamestate):
-          for target_hand in self.list_target_hands(target_player):
-            all_moves.append(Move("attack", attack_hand, target_player, target_hand))
+
+    for attack_hand in self.list_attack_hands():
+      for target_player in self.list_targets(gamestate):
+        for target_hand in self.list_target_hands(target_player):
+          all_moves.append(Move("attack", attack_hand, target_player, target_hand))
     return all_moves
     
   
@@ -217,7 +217,7 @@ class Gamestate:
   def done(self): #returns True after only one (or fewer) people are left standing 
     alive_counter = 0
     for player in self.players: #running this loop every single turn might not be the most computationally efficient...
-      if player.alive:
+      if player.check_alive():
         alive_counter += 1
     
     if alive_counter <= 1:
@@ -227,7 +227,7 @@ class Gamestate:
 
   def first_blood(self): #returns True as soon as first person dies
     for player in self.players:
-      if not player.alive:
+      if not player.check_alive():
         return True 
       else:
         return False
@@ -245,7 +245,7 @@ class Gamestate:
     live_player_found = False
     while not live_player_found:
       self.active_player_index = (self.active_player_index + 1) % len(self.players)
-      live_player_found = self.players[self.active_player_index].alive
+      live_player_found = self.players[self.active_player_index].check_alive()
   
   def run_game(self):
     self.print()
@@ -324,4 +324,5 @@ class Move():
 
   
   def __repr__(self): #like this for debug reasons
-    return self.type
+    # return self.type
+    return str(self)
