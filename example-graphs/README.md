@@ -11,10 +11,10 @@ In this folder you'll find a few example graphs for various versions of Chopstic
 Now, a quick explanation of the color code:
 - Green marks the start.
 - Blue is for player 0, red is for player 1, and orange is for player 2.
-	- <u>Dark blue</u> means a gamestate where player 0 has won.
-	- <u>Medium blue</u> means a gamestate where player 0 will inevitably win.
-	- <u>Light blue</u> means a gamestate where player 0 is guaranteed a win *if they play the right moves*.
+	- **Dark blue** means a gamestate where player 0 has won.
+	- **Medium blue** means a gamestate where player 0 will inevitably win.
+	- **Light blue** means a gamestate where player 0 is guaranteed a win *if they play the right moves*.
 	- The same logic applies for the other colors.
 
 <br>
-Finally, if you scroll down on these pages, you can see the physics settings. These control the physics simulation running on the graphs. You can disable physics to basically eliminate all lag. Apart from that, feel free to play around with the settings!
+Finally, if you scroll down on these pages, you can see the physics settings. These control the physics simulation running on the graphs. You can disable physics to basically eliminate all lag. Apart from that, play around and see what happens!
