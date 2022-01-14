@@ -2,9 +2,9 @@
 
 In this folder you'll find a few example graphs for various versions of Chopsticks. Below are links to view the graphs:
 
-- **[2,2,2 game](https://google.com). This one is very small so it's good to try first to see if your device can display the graphs.** This is a 2 player game of chopsticks, where each player has 2 hands, and each hand only has two fingers. (If you get two on a hand, that hand dies.) 
-- [3,2,2 game](https://google.com). This is a 3 player game of chopsticks where each hand has two fingers. You can already see how much more complex stuff becomes just by adding one player!
-- **[2,2,5 game](https://google.com), the classic one.** 2 players, 2 hands per player, 5 fingers per hand. Note: this graph is very large and may be quite laggy.
+- **[2,2,2 game](https://sites.google.com/view/chopsticksgraphgallery/graphs/222-graph). This one is very small so it's good to try first to see if your device can display the graphs.** This is a 2 player game of chopsticks, where each player has 2 hands, and each hand only has two fingers. (If you get two on a hand, that hand dies.) 
+- [3,2,2 game](https://sites.google.com/view/chopsticksgraphgallery/graphs/322-graph). This is a 3 player game of chopsticks where each hand has two fingers. You can already see how much more complex stuff becomes just by adding one player!
+- **[2,2,5 game](https://sites.google.com/view/chopsticksgraphgallery/graphs/225-graph), the classic one.** 2 players, 2 hands per player, 5 fingers per hand. Note: this graph is very large and may be quite laggy.
 
 <br>
 
